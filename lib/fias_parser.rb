@@ -1,7 +1,7 @@
 require "fias_parser/version"
 require 'mechanize'
 require 'ox'
-require 'cocaine'
+require 'terrapin'
 
 module FiasParser
   class Document
@@ -9,7 +9,7 @@ module FiasParser
       @block = block
       @batch = []
       @batch_size = options[:batch_size] || 10
-      
+
       @root_name = nil
       @item_name = nil
     end
@@ -19,10 +19,10 @@ module FiasParser
 
       if @root_name.nil?
         @root_name = name
-        
+
         return
       end
-      
+
       @item_name = name
       @item = {}
     end
@@ -35,15 +35,15 @@ module FiasParser
       self.yield_batch if name == @root_name && @batch.any?
 
       return if @item.nil? || name != @item_name
-      
+
       @batch << @item
 
       self.yield_batch if @batch.size >= @batch_size
     end
 
     def yield_batch
-      @block.call( @batch )      
-      @batch = []      
+      @block.call( @batch )
+      @batch = []
     end
   end
 
@@ -61,7 +61,7 @@ module FiasParser
       self.unpack
     end
 
-    def process( term, options = {}, &block ) 
+    def process( term, options = {}, &block )
       file_name = Dir.entries( self.archive_path ).find { |f| f =~ /#{term}/i }
 
       if file_name.nil?
@@ -76,25 +76,25 @@ module FiasParser
     end
 
     def check_executables
-      line = Cocaine::CommandLine.new( "wget", "-h" )
+      line = Terrapin::CommandLine.new( "wget", "-h" )
 
       begin
         line.run
-      rescue Cocaine::CommandNotFoundError => e
+      rescue Terrapin::CommandNotFoundError => e
         puts 'wget is not installed. Run "sudo apt-get install wget"'
 
         return false
-      end 
+      end
 
-      line = Cocaine::CommandLine.new( "unar", "-h" )
+      line = Terrapin::CommandLine.new( "unar", "-h" )
 
       begin
         line.run
-      rescue Cocaine::CommandNotFoundError => e
+      rescue Terrapin::CommandNotFoundError => e
         puts 'unar is not installed. Run "sudo apt-get install unar"'
 
         return false
-      end 
+      end
 
       true
     end
@@ -118,12 +118,12 @@ module FiasParser
       post_data['__EVENTTARGET'] = 'ctl00$contentPlaceHolder$downloadRadGrid$ctl00$ctl04$fullSZLinkButton'
 
       if File.exists?( self.archive_file_path )
-        puts "File '#{self.archive_file_path}' already exists."        
-        
+        puts "File '#{self.archive_file_path}' already exists."
+
         return
       end
 
-      line = Cocaine::CommandLine.new( "wget", "--output-document=:out --post-data=:post_data :url" )
+      line = Terrapin::CommandLine.new( "wget", "--output-document=:out --post-data=:post_data :url" )
 
       line.run( {
         out: self.archive_file_path,
@@ -137,7 +137,7 @@ module FiasParser
 
       FileUtils.mkdir_p ( dir ) unless File.exists?( dir )
 
-      line = Cocaine::CommandLine.new( "unar", "-o :dir :archive" )
+      line = Terrapin::CommandLine.new( "unar", "-o :dir :archive" )
 
       line.run( {
         dir: dir,
